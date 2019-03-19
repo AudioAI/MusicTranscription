@@ -1,6 +1,6 @@
 # 扒谱小组技术报告  
-  
-  
+
+
 ## Revision List  
 
 | 时间 | 修订内容 |
@@ -10,6 +10,8 @@
 ||数据集部分新增傅里叶变换、小波变换相关内容|
 |03/09/2019|深度学习部分新增CNN简介、CNN结构、CNN实现环境相关内容|
 |03/10/2019|MIDI文件部分新增JS生成MIDI文件参考文献|
+|03/18/2019|MIDI文件部分新增格式详解（有待精简）|
+|03/19/2019|数据集部分新增librosa库内容|
 
   
 
@@ -45,7 +47,11 @@
 	5. 完善的文档  
 
 **Tensorflow环境的搭建**  
-	见参考文献\[4\]\[5\]。  
+	见参考文献\[5\]\[6\]。  
+
+  
+
+
 
 
 ### MIDI文件  
@@ -99,7 +105,9 @@
 	这个部分我们需要进行几个步骤，首先是获得钢琴这种使用五线谱的乐器的midi文件，这样在对照的时候更加方便，在机器学习的时候对照更快。接下来在考虑多乐器的时候需要把五线谱转化为其他的谱子，比如六线谱。  
 
 #### JS生成MIDI文件  
-​	见参考文献\[6\]。  
+​	见参考文献\[7\]。  
+
+  
 
   
 
@@ -110,7 +118,7 @@
 #### 傅里叶变换、小波变换、常数Q变换  
 
 ​	在将wav文件的音频波形信号转换为时频图（spectrogram）的过程中，需要用到常数Q变换做时域与频域的分析。本部分概述快速傅里叶变换（FFT）、短时傅里叶变换（STFT）、小波变换（WT）以及常数Q变换（CQT）在音乐信号时频分析中的特点。
-​	本部分参考资料详见引用\[1\]\[2\]\[3\]。  
+​	本部分参考资料详见引用\[1\]\[2\]\[3\]\[4\]\[6\]\[8\]\[9\]。  
 
 **傅里叶变换**  
 	傅立叶变换可将时域信号转换至频域信号，对一整段信号分析其频率成分。但由于分解出的三角函数为作用域为整个时域，其对时间的分辨率不高。即假设一段由一段高频信号与一段低频信号前后连接而成，那么对该信号做傅立叶变换的结果，与对二者顺序调换后形成的一段信号做傅立叶变换的结果完全相同。  
@@ -121,13 +129,41 @@
 **小波变换**    
 	傅里叶变换的局限性主要原因在其分解出的每一个三角函数都作用在整个时域上，小波变换则修正了这一点。小波变换中使用有限长且会衰减的小波基替换了三角函数基（“小波”名称的由来），每个小波成分仅在一小段时域上作用，因此对时间有更高的解析度。  
 	不同于傅里叶变换，小波变换变量只有频率ω，小波变换有两个变量：尺度a（scale）和平移量τ（translation）。尺度a控制小波函数的伸缩，平移量 τ控制小波函数的平移。尺度就对应于频率（反比），平移量 τ就对应于时间。  
+	对一个时间窗口中的波形信号进行不同scale的拟合，得到该时间窗口中对应的不同频率的系数向量；移动该时间窗口（对应平移量translation），得到不同时间窗口中波形信号的频率系数向量。  
+	因此对wav进行小波分析的结果输出为一个系数矩阵，对应行列分别为时间维度与频率维度，可对应绘制光谱图。  
+
+**常数Q变换**  
+	常数Q变换较之小波变换，在频率纵轴上取了对数标度，反映到音高上则为线性标度，更加接近于人耳对于音乐的认知。
+
+
+
+#### 使用librosa库绘制视频光谱图  
+参考librosa官方文档\[10\]。  
+
+**使用`librosa.core.cqt()`对wav信号进行常数Q变换**  
+	默认参数下，该函数将对传入信号进行C1到C7七个八度的分解。  
+
+**一些转换函数**  
+`librosa.core`中包含一系列`note_to_midi`、`amplitude_to_db`、`hz_to_midi`等转换函数，可在输出文件时利用。  
+
+**使用`librosa.display.specshow()`绘制时频图**  
+	默认参数与`librosa.core.cqt()`相同。  
+	对其`data`参数，若直接使用CQT中输出的系数矩阵（amplitude）则会对泛音有较好的屏蔽作用，可用以识别基频音高。  
+	若使用`librosa.core.amplitude_to_db(data)`对原振幅矩阵做转换，则会将泛音也展示出来，或许可在后续研究中用以乐器分析。  
+	下图为《小星星变奏曲》起始七个音符的两种情况对比图。  
+![C4 C4 G4 G4 A4 A4 G4](Img/Spec_contrast.png)  
+
   
-  
-  
-## 参考文献  
-[1] [形象易懂讲解算法I——小波变换](https://zhuanlan.zhihu.com/p/22450818)  
-[2] [小波变换完美通俗讲解系列之 （一）](https://zhuanlan.zhihu.com/p/44215123)  
-[3] [小波变换完美通俗讲解系列之 （二）](https://zhuanlan.zhihu.com/p/44217268)  
-[4] [WIN10安装TENSORFLOW（GPU版本）](https://zhuanlan.zhihu.com/p/37086409)  
-[5] [Windows环境下安装TensorFlow并在Jupyter notebook上使用](https://blog.csdn.net/index20001/article/details/73555182)  
-[6] [用JS生成MIDI文件](https://blog.csdn.net/u012767526/article/details/51510421)  
+
+## 参考文献 
+
+[1] [傅里叶分析教程](https://zhuanlan.zhihu.com/p/19763358)   
+[2] [形象易懂讲解算法I——小波变换](https://zhuanlan.zhihu.com/p/22450818)  
+[3] [小波变换完美通俗讲解系列之 （一）](https://zhuanlan.zhihu.com/p/44215123)  
+[4] [小波变换完美通俗讲解系列之 （二）](https://zhuanlan.zhihu.com/p/44217268)  
+[5] [WIN10安装TENSORFLOW（GPU版本）](https://zhuanlan.zhihu.com/p/37086409)  
+[6] [Windows环境下安装TensorFlow并在Jupyter notebook上使用](https://blog.csdn.net/index20001/article/details/73555182)  
+[7] [用JS生成MIDI文件](https://blog.csdn.net/u012767526/article/details/51510421)  
+[8] [The Engineer's Ultimate Guide to Wavelet Analysis - The Wavelet Tutorial](https://cseweb.ucsd.edu/~baden/Doc/wavelets/polikar_wavelets.pdf)  
+[9] [The Constant Q Transform](http://doc.ml.tu-berlin.de/bbci/material/publications/Bla_constQ.pdf)  
+[10] [librosa home](https://librosa.github.io/librosa/index.html#)  
