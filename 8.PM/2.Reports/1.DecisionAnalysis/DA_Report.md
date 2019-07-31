@@ -151,7 +151,7 @@
 	对其`data`参数，若直接使用CQT中输出的系数矩阵（amplitude）则会对泛音有较好的屏蔽作用，可用以识别基频音高。  
 	若使用`librosa.core.amplitude_to_db(data)`对原振幅矩阵做转换，则会将泛音也展示出来，或许可在后续研究中用以乐器分析。  
 	下图为《小星星变奏曲》起始七个音符的两种情况对比图。  
-[C4 C4 G4 G4 A4 A4 G4](Img/Spec_contrast.png)  
+![C4 C4 G4 G4 A4 A4 G4](Img/Spec_contrast.png)  
 
 
 
