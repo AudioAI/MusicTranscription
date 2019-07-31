@@ -3,15 +3,17 @@
 
 ## Revision List  
 
-| 时间 | 修订内容 |
-|:---|:---|
-|02/26/2019|建档，确定三个技术方向并确定负责人|
-|03/03/2019|MIDI文件部分新增MIDI文件格式解析、文件分析器、MIDI文件转五线谱方法|
-||数据集部分新增傅里叶变换、小波变换相关内容|
-|03/09/2019|深度学习部分新增CNN简介、CNN结构、CNN实现环境相关内容|
-|03/10/2019|MIDI文件部分新增JS生成MIDI文件参考文献|
-|03/18/2019|MIDI文件部分新增格式详解（有待精简）|
-|03/19/2019|数据集部分新增librosa库内容|
+| 时间 | 修订内容 |  
+|:---|:---|  
+|02/26/2019|建档，确定三个技术方向并确定负责人|  
+|03/03/2019|MIDI文件部分新增MIDI文件格式解析、文件分析器、MIDI文件转五线谱方法|  
+||数据集部分新增傅里叶变换、小波变换相关内容|  
+|03/09/2019|深度学习部分新增CNN简介、CNN结构、CNN实现环境相关内容|  
+|03/10/2019|MIDI文件部分新增JS生成MIDI文件参考文献|  
+|03/18/2019|MIDI文件部分新增格式详解（有待精简）|  
+|03/19/2019|数据集部分新增librosa库内容|  
+|07/31/2019|新增技术方向：Source Separation，包括相关研究与非负矩阵分解实现方法简介|  
+||新增技术方向：Onset Detect|    
 
   
 
@@ -151,7 +153,34 @@
 	对其`data`参数，若直接使用CQT中输出的系数矩阵（amplitude）则会对泛音有较好的屏蔽作用，可用以识别基频音高。  
 	若使用`librosa.core.amplitude_to_db(data)`对原振幅矩阵做转换，则会将泛音也展示出来，或许可在后续研究中用以乐器分析。  
 	下图为《小星星变奏曲》起始七个音符的两种情况对比图。  
-![C4 C4 G4 G4 A4 A4 G4](Img/Spec_contrast.png)  
+[C4 C4 G4 G4 A4 A4 G4](Img/Spec_contrast.png)  
+
+
+
+### Source Separation  
+多乐器的转录需要将不同乐器的音频分离，由此需进行Source Separation。采用的方法为非负矩阵分解（Non-Negative Matrix Factorization, NMF）。    
+本部分参考资料详见引用\[11\]\[12\]\[13\]。  
+
+#### 相关研究：ICA，ISA，NMF与NTF  
+
+1. Independent Component Analysis(ICA)  
+ICA（独立成分分析）目的在于将混合信号分立为尽可能统计独立的不同分量（as statistically independent as possible）。思想类似于解多元一次方程式，对同一个混合声，需要多麦克风输入才能解得独立的各个分量。因此不能直接用于单输入的盲源分离。  
+
+2. Independent Subspace Analysis(ISA)  
+ISA（独立子空间分析）与ICA相类似，但其使用短时傅里叶变换（STFT）将原始信号分离为不同频率区间。不同的频率区间可看作同一混合源的不同观察输入，因此可再应用ICA对源进行分离。  
+
+3. Non-Negative Matrix Factorization(NMF)  
+基于NMF（非负矩阵分解）的盲源分离常将模型简化为声音信号的线性叠加。矩阵表示为：${ X=BG }$，其中$X$为混合源信息，$B$为基源信息，$G$为时变增益（time-varying gain）。NMF的任务就是在只有矩阵${X}$的情况下获取$B,G$。  
+其中，$X$往往为$m*t$的矩阵，也即每一行为频率点/段，每一列为时间帧。因此相应地，$B$为$m*n$矩阵，$G$为$n*t$矩阵，其中$n$可代表分离源个数。而在我们的研究中，$m$一般取88。  
+
+4. Non-Negative Tensor Factorization(NTF)  
+NTF（非负张量分解）则与NMF非常相似，但在音源信息数据表示上新增了一个维度。NMF往往使用振幅谱与时变增益，而NTF则在此基础上使用调制域与频变触发作为第三维度。  
+NTF接收一个张量$X$作为输入，$X$为一个三维数组，维度分别代表频率、时间与调制。NTF的分解目标可表达为：$X_{r,n,m} = {\Sigma}^K_{k=1}G_{r,k} {\cdot} A_{n,k} {\cdot} S_{m,k}$，其中$G$，$A$，$S$分别表示增益（gain）、频率基（frequency basis）与激活（activation）。 
+> While NMF decomposes a magnitude or power spectrum basis over time varying gain, NTF uses modulation domain as the third dimension and includeds frequency varying activation.   
+
+#### NMF具体实现  
+项目实现参考论文\[11\]，使用了librosa与scikit-learn等第三方Python库。  
+
 
   
 
@@ -166,4 +195,7 @@
 [7] [用JS生成MIDI文件](https://blog.csdn.net/u012767526/article/details/51510421)  
 [8] [The Engineer's Ultimate Guide to Wavelet Analysis - The Wavelet Tutorial](https://cseweb.ucsd.edu/~baden/Doc/wavelets/polikar_wavelets.pdf)  
 [9] [The Constant Q Transform](http://doc.ml.tu-berlin.de/bbci/material/publications/Bla_constQ.pdf)  
-[10] [librosa home](https://librosa.github.io/librosa/index.html#)  
+[10] [Librosa home](https://librosa.github.io/librosa/index.html#)  
+[11] [Monaural Sound Source Separation by Nonnegative Matrix Factorization With Temporal Continuity and Sparseness Criteria](http://www.cs.tut.fi/sgn/arg/music/tuomasv/virtanen_taslp2007.pdf)  
+[12] [Librosa Docs >> Advanced Examples >> Vocal Separation](https://librosa.github.io/librosa/auto_examples/plot_vocal_separation.html?highlight=vocal)  
+[13] [Musical Instrument Source Separation In Unison And Monaural Mixtures](http://www.cs.bilkent.edu.tr/tech-reports/2014/BU-CE-1403.pdf)  
