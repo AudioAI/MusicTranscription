@@ -13,8 +13,8 @@
 |03/10/2019|MIDI文件部分新增JS生成MIDI文件参考文献|  
 |03/18/2019|MIDI文件部分新增格式详解（有待精简）|  
 |03/19/2019|数据集部分新增librosa库内容|  
-|07/31/2019|新增技术方向：Source Separation，包括相关研究与非负矩阵分解实现方法简介|  
-||新增技术方向：Onset Detect|    
+|07/31/2019|新增技术方向：Source Separation，包括相关研究与非负矩阵分解算法介绍|  
+||新增技术方向：音符起止点检测，包括处理流程与算法介绍|    
 
   
 
@@ -53,9 +53,6 @@
 	见参考文献\[5\]\[6\]。  
 
   
-
-
-
 
 ### MIDI文件  
 > 负责人：宋云飞  
@@ -202,7 +199,44 @@ NTF接收一个张量$X$作为输入，$X$为一个三维数组，维度分别�
    这一步仅仅作为验证Source Separation效果的工具，在AMT项目集成中实际上不需要，可只将振幅频谱向下一模块传递。  
    
 
-  
+
+### 音符起止点检测  
+音符起止点检测的结果主要用于：  
+1. 最终转录结果的音符标记  
+2. 作为频谱图音符帧切割依据  
+
+本部分实现主要参考文献\[14\]，借助第三方Python库librosa进行常数Q变换得到分音矩阵后进行下列操作。    
+
+**I. 预处理：降采样与降噪**  
+- 每8帧取平均值  
+- 降噪函数，设置阈值$\sigma$：  
+  $$ f(x) = \begin{cases}
+  x & x>{\sigma} \\
+  0 & x<={\sigma}
+  \end{cases}$$  
+
+**II. 距离向量计算**  
+采用欧式距离：  
+${\Sigma_i{{(x[i]-y[i])}}^2}$  
+
+**III. 光滑处理**  
+
+> Demo中添加光滑处理仅减小了微小扰动，线性降低了时间复杂度，但却让最后一步局部峰值提取的阈值难以界定，该步骤是否需要保留仍待实验  
+
+**IV. 移动窗口归一化**  
+本步处理方便峰值提取时设定全局阈值。  
+- ${onset2(n) ={\frac{onset1(n)}{||x||_2}}}$, ${||x||_2 = ({\Sigma}_{i=1}^nx_i^2)^{\frac{1}{2}}}$  
+- $x = (x_i, x_{i+1}, ..., x_{i+hop+overlap})^T, i = 0, 1, ...$  
+- Window size $i+hop+overlap$ is the sample rate of $onset1$  
+
+**V. 局部峰值提取**  
+设定阈值设置阈值$\sigma$：  
+  $$ f(x) = \begin{cases}
+  1 & x>{\sigma} \\
+  0 & x<={\sigma}
+  \end{cases}$$  
+最终可得到起止点向量。
+
 
 ## 参考文献 
 
@@ -219,3 +253,4 @@ NTF接收一个张量$X$作为输入，$X$为一个三维数组，维度分别�
 [11] [Monaural Sound Source Separation by Nonnegative Matrix Factorization With Temporal Continuity and Sparseness Criteria](http://www.cs.tut.fi/sgn/arg/music/tuomasv/virtanen_taslp2007.pdf)  
 [12] [Librosa Docs >> Advanced Examples >> Vocal Separation](https://librosa.github.io/librosa/auto_examples/plot_vocal_separation.html?highlight=vocal)  
 [13] [Musical Instrument Source Separation In Unison And Monaural Mixtures](http://www.cs.bilkent.edu.tr/tech-reports/2014/BU-CE-1403.pdf)  
+[14] [基于常量Q变换的音符起始点检测](http://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDHIS2&filename=JSJC201310062&v=MjUwNTkxRnJDVVJMT2ZZT1Z1RnlEaFc3ck9MejdCYmJHNEg5TE5yNDlEWm9SOGVYMUx1eFlTN0RoMVQzcVRyV00=)  
