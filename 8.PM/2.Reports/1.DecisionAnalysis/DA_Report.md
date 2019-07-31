@@ -1,5 +1,6 @@
 # 扒谱小组技术报告  
-
+**基于时频分析的多乐器转录研究**  
+**Automatic Music Transcription**  
 
 ## Revision List  
 
@@ -178,9 +179,28 @@ NTF（非负张量分解）则与NMF非常相似，但在音源信息数据表�
 NTF接收一个张量$X$作为输入，$X$为一个三维数组，维度分别代表频率、时间与调制。NTF的分解目标可表达为：$X_{r,n,m} = {\Sigma}^K_{k=1}G_{r,k} {\cdot} A_{n,k} {\cdot} S_{m,k}$，其中$G$，$A$，$S$分别表示增益（gain）、频率基（frequency basis）与激活（activation）。 
 > While NMF decomposes a magnitude or power spectrum basis over time varying gain, NTF uses modulation domain as the third dimension and includeds frequency varying activation.   
 
-#### NMF具体实现  
+#### Source Separation实现方法  
 项目实现参考论文\[11\]，使用了librosa与scikit-learn等第三方Python库。  
-
+1. 获取振幅矩阵$X$  
+   - 通过`librosa.core.cqt()`获取频谱，但此时获取的为复数系数矩阵  
+   - 通过`librosa.core.magphase()`将复数系数矩阵分解为实数振幅矩阵`S`与复数相位`P`  
+   - 振幅矩阵`S`即为原始混合矩阵$X$  
+2. 对$X$进行非负矩阵分解  
+   - 直接使用scikit-learn中封装的NMF函数  
+   - 参考\[11\]中的算法完成  
+     - 随机初始化$B,G$  
+     - $B$迭代：${B {\lArr} B.{\times} {\frac{{\frac{X}{BG}}G^T}{1G^T}}}$  
+     - $G$迭代：${G {\lArr} G.{\times} {\frac{{\nabla}{c^-}(B,G)}{{\nabla}{c^+}(B,G)}}}$，其中：${{\nabla}{c^+}(B,G)} = {B^T}1$，${{\nabla}{c^-}(B,G)} = {B^T{\frac{X}{BG}}}$
+     - Cost function: ${c(B,G)=c_r(B,G)+{\alpha}c_t(G)+{\beta}c_s(G}$  
+        - $c_r(B,G)$: Reconstruction error term, using:  
+          ${D(X||BG)={\Sigma}_{k,t}[X]_{k,t}{\log}{\frac{[X]_{k,t}}{[BG]_{k,t}}}-[X]_{k,t} + [BG]_{k,t}}$  
+		- $c_t(G)$: Temporal continuity term, using:  
+		  ${c_t(G)={\Sigma}_{j=1}^{J}{\frac{1}{{\sigma}_j^2}}{\Sigma}_{t=2}^T(g_{t,j}-g_(t-1,j)^2}, {\sigma}_j={\sqrt{(1/T){\Sigma}_{t=1}^{T}g_{t,j}^2}}$  
+		- $c_s(G)$: Sparseness Objective term, using:  
+		  $c_s(G) = {\Sigma}_{j=1}^J{\Sigma}_{t=1}^Tf(g_{j,t}/{\sigma}_j)$  
+3. 再合成  
+   这一步仅仅作为验证Source Separation效果的工具，在AMT项目集成中实际上不需要，可只将振幅频谱向下一模块传递。  
+   
 
   
 
