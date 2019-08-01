@@ -174,7 +174,7 @@ ISA（独立子空间分析）与ICA相类似，但其使用短时傅里叶变�
 4. Non-Negative Tensor Factorization(NTF)  
 NTF（非负张量分解）则与NMF非常相似，但在音源信息数据表示上新增了一个维度。NMF往往使用振幅谱与时变增益，而NTF则在此基础上使用调制域与频变触发作为第三维度。  
 NTF接收一个张量X作为输入，X为一个三维数组，维度分别代表频率、时间与调制。NTF的分解目标可表达为：  
-![NTF](./img/NTF.png)  
+![NTF](Img/NTF.png)  
 其中G，A，S分别表示增益（gain）、频率基（frequency basis）与激活（activation）。 
 > While NMF decomposes a magnitude or power spectrum basis over time varying gain, NTF uses modulation domain as the third dimension and includeds frequency varying activation.   
 
@@ -187,7 +187,7 @@ NTF接收一个张量X作为输入，X为一个三维数组，维度分别代表
 2. 对$X$进行非负矩阵分解  
    - 直接使用scikit-learn中封装的NMF函数  
    - 参考\[11\]中的算法完成  
-![NMF](./img/Math_NMF.png)  
+![NMF](Img/Math_NMF.png)  
 3. 再合成  
    这一步仅仅作为验证Source Separation效果的工具，在AMT项目集成中实际上不需要，可只将振幅频谱向下一模块传递。  
    
@@ -201,7 +201,7 @@ NTF接收一个张量X作为输入，X为一个三维数组，维度分别代表
 本部分实现主要参考文献\[14\]，借助第三方Python库librosa进行常数Q变换得到分音矩阵后进行下列操作。    
 
 **I. 预处理：降采样与降噪**  
-![Pre-processing](./img/Decrease.png)  
+![Pre-processing](Img/Decrease.png)  
 
 **II. 距离向量计算**  
 采用欧式距离：![Euclidean]
@@ -213,10 +213,10 @@ NTF接收一个张量X作为输入，X为一个三维数组，维度分别代表
 
 **IV. 移动窗口归一化**  
 本步处理方便峰值提取时设定全局阈值。  
-![Normalization](./img/Normalization.png)  
+![Normalization](Img/Normalization.png)  
 
 **V. 局部峰值提取**  
-![Peak](./img/Peak_extraction.png)  
+![Peak](Img/Peak_extraction.png)  
 最终可得到起止点向量。
 
 
