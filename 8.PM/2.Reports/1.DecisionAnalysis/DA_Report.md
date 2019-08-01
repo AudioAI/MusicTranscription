@@ -187,7 +187,7 @@ NTF接收一个张量X作为输入，X为一个三维数组，维度分别代表
 2. 对$X$进行非负矩阵分解  
    - 直接使用scikit-learn中封装的NMF函数  
    - 参考\[11\]中的算法完成  
-![NMF](Img/Math_NMF.png)  
+![NMF](Img/Math_nmf.png)  
 3. 再合成  
    这一步仅仅作为验证Source Separation效果的工具，在AMT项目集成中实际上不需要，可只将振幅频谱向下一模块传递。  
    
